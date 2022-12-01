@@ -1,12 +1,17 @@
 import React, {useState, useEffect} from "react";
 import { Container } from "../../component/Container";
+import './main.css'
 
 
 export default function Main() {
+  const [triggerModal, setTriggerModal] = useState(false)
   const [selectedProvince, setSelectedProvince] = useState("")
   const [selectedCity, setSelectedCity] = useState("")
   const [province, setProvince] = useState([])
   const [city, setCity] = useState([])
+  const [faskes, setFaskes] = useState([])
+
+
 
   const getProvince = async () => {
     await fetch("https://kipi.covid19.go.id/api/get-province", {
@@ -29,6 +34,18 @@ export default function Main() {
     })
   }
 
+  const getLocate = async(province: string, city: string) => {
+    await fetch(`https://kipi.covid19.go.id/api/get-faskes-vaksinasi?province=${province}&city=${city}`, {
+      method : 'GET'
+    }).then((res) => res.json()).then((data) => {
+      setFaskes(data["data"])
+
+    })
+  }
+
+
+
+
   const handleSelected = (e: React.FormEvent<HTMLSelectElement>) => {
     e.preventDefault()
     setSelectedProvince(e.currentTarget.value)
@@ -36,11 +53,19 @@ export default function Main() {
 
   }
 
+  const turnOnModal = () => {
+    setTriggerModal(true)
+    getLocate(selectedProvince,selectedCity)
+  }
+
+  const turnOffModal = () => {
+    setTriggerModal(false)
+  }
+
 
   useEffect(() => {
     getProvince()
   }, [])
-
 
 
   return(
@@ -75,7 +100,7 @@ export default function Main() {
           'marginBottom' :'20px'
         }}
       >
-        <option value="" disabled selected>Pilih Daerah Terlebih dahulu</option>
+        <option value="a" disabled selected>Pilih Daerah Terlebih dahulu</option>
       </select> : <select
         style={{
           'marginTop' : '10px',
@@ -85,7 +110,7 @@ export default function Main() {
           'padding': '10px',
           'marginBottom' :'20px'
         }}
-        value={selectedProvince}
+        value={selectedCity}
         onChange={(e) => {
           setSelectedCity(e.currentTarget.value)
 
@@ -96,6 +121,22 @@ export default function Main() {
         ))}
 
       </select>}
+
+      <button className="bg-green-600 text-white p-3 rounded" onClick={turnOnModal}>Temukan Data</button>
+      <div id="myModal" className={triggerModal ? "modal-on" : "modal"}>
+      <div className="modal-content">
+      <span className="close" onClick={turnOffModal}>&times;</span>
+      {faskes.map((e) => (
+        <>
+          <p className="mt-5 font-medium">Nama Tempat : <span className="font-light">{e["nama"]}</span></p>
+          <p className="mt-5 font-medium">Lokasi : <span className="font-light">{e["alamat"]}</span></p>
+          <p className="mt-5 font-medium">No Telp : <span className="font-light">{e["telp"] }</span></p>
+          ------------------------- ------------------ ------------
+        </>
+      ))}
+  </div>
+
+</div>
     </Container>
   )
 }
